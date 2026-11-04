@@ -502,6 +502,9 @@
     const statusEl = $(statusElId);
     if (!video || !window.jsQR) return;
 
+    stopCameraScanner();
+    let isResolved = false;
+
     try {
       if (statusEl) statusEl.textContent = 'Requesting camera access...';
       const stream = await navigator.mediaDevices.getUserMedia({
@@ -520,6 +523,7 @@
       const scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
 
       function tick() {
+        if (isResolved) return;
         if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
           const vw = video.videoWidth;
           const vh = video.videoHeight;
@@ -540,6 +544,8 @@
           });
 
           if (code && code.data && code.data.trim()) {
+            if (isResolved) return;
+            isResolved = true;
             const raw = code.data.trim();
             stopCameraScanner();
             if (navigator.vibrate) {
@@ -550,7 +556,9 @@
             return;
           }
         }
-        state.scannerRaf = requestAnimationFrame(tick);
+        if (!isResolved) {
+          state.scannerRaf = requestAnimationFrame(tick);
+        }
       }
       state.scannerRaf = requestAnimationFrame(tick);
     } catch (err) {
@@ -645,6 +653,12 @@
 
     dc.onopen = () => {
       console.log('[DataChannel] Open and ready!');
+      stopCameraScanner();
+      const senderScanModal = $('modal-sender-scanner');
+      if (senderScanModal) senderScanModal.classList.add('hidden');
+      const pasteModal = $('modal-paste-code');
+      if (pasteModal) pasteModal.classList.add('hidden');
+
       requestWakeLock();
       playChime([523.25, 659.25, 783.99]);
       launchConfetti();
@@ -772,6 +786,18 @@
         showToast('That is an Offer code! Sender needs the Answer code from Receiver.');
         return;
       }
+
+      // Check if already stable / already connected
+      if (!state.pc) return;
+      if (state.pc.signalingState === 'stable') {
+        console.log('[Sender] PeerConnection is already stable/connected. Ignoring duplicate answer.');
+        return;
+      }
+      if (state.pc.signalingState !== 'have-local-offer') {
+        console.warn('[Sender] Unexpected signalingState for answer:', state.pc.signalingState);
+        return;
+      }
+
       const answerSdp = decompressSDP(answerToken);
       if (!answerSdp || !answerSdp.includes('v=0')) {
         throw new Error('Invalid SDP answer content');
@@ -779,6 +805,9 @@
       await state.pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
       showToast('Answer applied! Connecting devices...');
     } catch (err) {
+      if (state.pc && state.pc.signalingState === 'stable') {
+        return;
+      }
       console.error('[Sender] Failed to apply answer:', err);
       showToast('Answer failed: ' + (err.message || err));
     }
@@ -807,6 +836,11 @@
       }
       if (offerToken.startsWith('SNAP_ANSWER:') || offerToken.startsWith('SF1_ANSWER:')) {
         showToast('That is an Answer code! Receiver needs the Offer code from Sender.');
+        return;
+      }
+
+      if (state.pc && (state.pc.signalingState === 'have-remote-offer' || state.pc.signalingState === 'stable')) {
+        console.log('[Receiver] Offer already processed or connected, ignoring duplicate.');
         return;
       }
 
