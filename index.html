@@ -16,7 +16,7 @@
   <link rel="manifest" href="manifest.webmanifest">
 
   <!-- Stylesheet -->
-  <link rel="stylesheet" href="style.css">
+  <link rel="stylesheet" href="style.css?v=2">
 </head>
 <body>
   <!-- Floating Hand-drawn Doodle Background Layer -->
@@ -529,7 +529,7 @@
           <!-- Camera scanner viewport -->
           <div class="scanner-container" id="receiver-scanner-container">
             <div class="scanner-frame">
-              <video id="receiver-video" playsinline muted class="camera-video"></video>
+              <video id="receiver-video" playsinline webkit-playsinline muted autoplay class="camera-video"></video>
               <div class="scanner-overlay">
                 <div class="reticle-corner top-left"></div>
                 <div class="reticle-corner top-right"></div>
@@ -581,6 +581,13 @@
               <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
               <span>Copy answer code</span>
             </button>
+            <button id="btn-toggle-answer-text" class="btn-secondary btn-sm">
+              <span>View code text</span>
+            </button>
+          </div>
+
+          <div id="answer-text-box" class="code-box-drawer hidden">
+            <textarea id="answer-text-area" readonly class="code-textarea" rows="4"></textarea>
           </div>
         </div>
       </div>
@@ -801,7 +808,10 @@
         <button class="modal-close-btn" id="btn-close-paste-modal" aria-label="Close">&times;</button>
       </div>
       <div class="modal-body">
-        <p class="modal-desc" id="paste-modal-desc">Paste the handshake token copied from the other device:</p>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 0.5rem">
+          <p class="modal-desc" id="paste-modal-desc" style="margin:0">Paste code:</p>
+          <button type="button" id="btn-paste-clipboard" class="btn-secondary btn-sm" style="padding: 2px 10px; min-height: 28px; font-size: 0.78rem">Paste from Clipboard</button>
+        </div>
         <textarea id="paste-modal-textarea" class="code-textarea" rows="6" placeholder="Paste code here..."></textarea>
       </div>
       <div class="modal-footer">
@@ -830,7 +840,7 @@
       </div>
       <div class="modal-body">
         <div class="scanner-frame">
-          <video id="sender-scanner-video" playsinline muted class="camera-video"></video>
+          <video id="sender-scanner-video" playsinline webkit-playsinline muted autoplay class="camera-video"></video>
           <div class="scanner-overlay">
             <div class="reticle-corner top-left"></div>
             <div class="reticle-corner top-right"></div>
@@ -858,6 +868,6 @@
   <script src="vendor/fflate.js"></script>
 
   <!-- Application Logic -->
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 </html>

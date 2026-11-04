@@ -277,93 +277,108 @@
   }
 
   // --- SDP COMPRESSION & DECOMPRESSION ---
-  async function compressSDP(sdp) {
-    const minified = sdp.split('\r\n').filter((l) => {
-      const line = l.trim();
-      if (!line) return false;
-      if (line.startsWith('a=extmap') || line.startsWith('a=msid') || line.startsWith('a=rtcp') || line.startsWith('a=ice-options:trickle')) {
-        return false;
-      }
-      return true;
-    }).join('\n');
+  function compressSDP(sdp) {
+    const minified = sdp
+      .split('\r\n')
+      .map((l) => l.trim())
+      .filter((line) => {
+        if (!line) return false;
+        if (
+          line.startsWith('a=extmap') ||
+          line.startsWith('a=msid') ||
+          line.startsWith('a=rtcp') ||
+          line.startsWith('a=ice-options:trickle')
+        ) {
+          return false;
+        }
+        return true;
+      })
+      .join('\n');
 
     const rawBytes = new TextEncoder().encode(minified);
 
-    if (typeof CompressionStream !== 'undefined') {
-      try {
-        const cs = new CompressionStream('deflate-raw');
-        const writer = cs.writable.getWriter();
-        writer.write(rawBytes);
-        writer.close();
-        const chunks = [];
-        const reader = cs.readable.getReader();
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          chunks.push(value);
-        }
-        const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
-        const merged = new Uint8Array(totalLen);
-        let off = 0;
-        for (const c of chunks) {
-          merged.set(c, off);
-          off += c.length;
-        }
-        return bytesToBase64Url(merged);
-      } catch (e) {}
-    }
-
     if (window.fflate && window.fflate.deflateSync) {
-      const def = window.fflate.deflateSync(rawBytes);
-      return bytesToBase64Url(def);
+      try {
+        const def = window.fflate.deflateSync(rawBytes, { level: 9 });
+        return bytesToBase64Url(def);
+      } catch (e) {
+        console.warn('[SDP] fflate deflate error, fallback to raw:', e);
+      }
     }
 
     return bytesToBase64Url(rawBytes);
   }
 
-  async function decompressSDP(token) {
+  function decompressSDP(token) {
+    if (!token) return '';
     token = token.trim();
-    if (token.startsWith('SF:')) {
+    if (token.startsWith('SNAP_OFFER:')) token = token.substring('SNAP_OFFER:'.length);
+    else if (token.startsWith('SNAP_ANSWER:')) token = token.substring('SNAP_ANSWER:'.length);
+    else if (token.startsWith('SF1_OFFER:')) token = token.substring('SF1_OFFER:'.length);
+    else if (token.startsWith('SF1_ANSWER:')) token = token.substring('SF1_ANSWER:'.length);
+    else if (token.startsWith('SF:')) {
       const parts = token.split(':');
       token = parts.slice(4).join(':') || parts[parts.length - 1];
     }
-    const bytes = base64UrlToBytes(token);
+    token = token.trim();
 
-    if (typeof DecompressionStream !== 'undefined') {
-      try {
-        const ds = new DecompressionStream('deflate-raw');
-        const writer = ds.writable.getWriter();
-        writer.write(bytes);
-        writer.close();
-        const chunks = [];
-        const reader = ds.readable.getReader();
-        while (true) {
-          const { value, done } = await reader.read();
-          if (done) break;
-          chunks.push(value);
+    try {
+      const bytes = base64UrlToBytes(token);
+      if (window.fflate && window.fflate.inflateSync) {
+        try {
+          const inf = window.fflate.inflateSync(bytes);
+          const text = new TextDecoder().decode(inf);
+          return text.split('\n').join('\r\n') + '\r\n';
+        } catch (e) {
+          // May be uncompressed raw SDP
         }
-        const totalLen = chunks.reduce((acc, c) => acc + c.length, 0);
-        const merged = new Uint8Array(totalLen);
-        let off = 0;
-        for (const c of chunks) {
-          merged.set(c, off);
-          off += c.length;
-        }
-        const text = new TextDecoder().decode(merged);
-        return text.split('\n').join('\r\n') + '\r\n';
-      } catch (e) {}
+      }
+      const rawText = new TextDecoder().decode(bytes);
+      return rawText.split('\n').join('\r\n') + '\r\n';
+    } catch (err) {
+      console.warn('[SDP] Failed to decompress token:', err);
+      if (token.includes('v=0') || token.includes('m=')) {
+        return token.split('\n').join('\r\n') + '\r\n';
+      }
+      throw err;
     }
+  }
 
-    if (window.fflate && window.fflate.inflateSync) {
-      try {
-        const inf = window.fflate.inflateSync(bytes);
-        const text = new TextDecoder().decode(inf);
-        return text.split('\n').join('\r\n') + '\r\n';
-      } catch (e) {}
+  // --- CLIPBOARD HELPER ---
+  function copyToClipboard(text, successMsg) {
+    if (!text) return;
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(() => {
+        showToast(successMsg || 'Code copied to clipboard!');
+      }).catch(() => {
+        fallbackCopyText(text, successMsg);
+      });
+      return;
     }
+    fallbackCopyText(text, successMsg);
+  }
 
-    const rawText = new TextDecoder().decode(bytes);
-    return rawText.split('\n').join('\r\n') + '\r\n';
+  function fallbackCopyText(text, successMsg) {
+    try {
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.setAttribute('readonly', '');
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '0';
+      ta.style.opacity = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      ta.setSelectionRange(0, 99999);
+      const ok = document.execCommand('copy');
+      document.body.removeChild(ta);
+      if (ok) {
+        showToast(successMsg || 'Code copied to clipboard!');
+        return;
+      }
+    } catch (err) {}
+    showToast('Copy blocked by browser. Tap "View code text" to copy.');
   }
 
   // --- AESTHETIC QR CODE RENDERER ---
@@ -371,25 +386,30 @@
     if (!container || !window.qrcode) return;
     container.innerHTML = '';
 
-    const qr = qrcode(0, 'M');
+    const qr = qrcode(0, 'L');
     qr.addData(text);
     qr.make();
 
     const moduleCount = qr.getModuleCount();
     const canvas = document.createElement('canvas');
-    const scale = 8;
+    const scale = 7;
     const margin = 4 * scale;
     const canvasSize = moduleCount * scale + margin * 2;
 
-    const dpr = window.devicePixelRatio || 2;
+    const dpr = Math.min(window.devicePixelRatio || 2, 2);
     canvas.width = canvasSize * dpr;
     canvas.height = canvasSize * dpr;
     canvas.style.width = '100%';
-    canvas.style.height = '100%';
+    canvas.style.maxWidth = '300px';
+    canvas.style.height = 'auto';
+    canvas.style.aspectRatio = '1 / 1';
+    canvas.style.display = 'block';
+    canvas.style.margin = '0 auto';
 
     const ctx = canvas.getContext('2d');
     ctx.scale(dpr, dpr);
 
+    // Pure crisp white background for maximum camera contrast
     ctx.fillStyle = '#ffffff';
     ctx.fillRect(0, 0, canvasSize, canvasSize);
 
@@ -397,100 +417,48 @@
       return (r < 7 && c < 7) || (r < 7 && c >= moduleCount - 7) || (r >= moduleCount - 7 && c < 7);
     }
 
-    const primaryEyeColor = '#4f46e5';
-    const accentEyeColor = '#f97316';
-    const moduleColor = '#121316';
+    const primaryColor = '#4f46e5';
+    const accentColor = '#f97316';
+    const moduleColor = '#111827';
 
-    // 1. Data modules as circular dots
+    // 1. Data modules as crisp squares for 100% camera scanning accuracy
     ctx.fillStyle = moduleColor;
     for (let r = 0; r < moduleCount; r++) {
       for (let c = 0; c < moduleCount; c++) {
         if (qr.isDark(r, c) && !isFinder(r, c)) {
-          const x = margin + c * scale;
-          const y = margin + r * scale;
-          const radius = scale * 0.38;
-          ctx.beginPath();
-          ctx.arc(x + scale / 2, y + scale / 2, radius, 0, Math.PI * 2);
-          ctx.fill();
+          ctx.fillRect(margin + c * scale, margin + r * scale, scale, scale);
         }
       }
     }
 
-    // 2. Corner Finder Patterns
+    // 2. Corner Finder Patterns (standard square 7x7 outer, 5x5 inner white, 3x3 core)
     const eyes = [
-      { r: 0, c: 0, color: primaryEyeColor },
-      { r: 0, c: moduleCount - 7, color: accentEyeColor },
-      { r: moduleCount - 7, c: 0, color: primaryEyeColor },
+      { r: 0, c: 0, color: primaryColor, core: primaryColor },
+      { r: 0, c: moduleCount - 7, color: accentColor, core: accentColor },
+      { r: moduleCount - 7, c: 0, color: primaryColor, core: primaryColor },
     ];
 
     eyes.forEach((eye) => {
       const ox = margin + eye.c * scale;
       const oy = margin + eye.r * scale;
-      const eyeSize = 7 * scale;
 
+      // Outer 7x7
       ctx.fillStyle = eye.color;
-      if (ctx.roundRect) {
-        ctx.beginPath();
-        ctx.roundRect(ox, oy, eyeSize, eyeSize, 12);
-        ctx.fill();
-      } else {
-        ctx.fillRect(ox, oy, eyeSize, eyeSize);
-      }
+      ctx.fillRect(ox, oy, 7 * scale, 7 * scale);
 
+      // Inner 5x5 white
       ctx.fillStyle = '#ffffff';
-      const innerCutout = 5 * scale;
-      if (ctx.roundRect) {
-        ctx.beginPath();
-        ctx.roundRect(ox + scale, oy + scale, innerCutout, innerCutout, 8);
-        ctx.fill();
-      } else {
-        ctx.fillRect(ox + scale, oy + scale, innerCutout, innerCutout);
-      }
+      ctx.fillRect(ox + scale, oy + scale, 5 * scale, 5 * scale);
 
-      ctx.fillStyle = eye.color;
-      const coreSize = 3 * scale;
-      if (ctx.roundRect) {
-        ctx.beginPath();
-        ctx.roundRect(ox + 2 * scale, oy + 2 * scale, coreSize, coreSize, 6);
-        ctx.fill();
-      } else {
-        ctx.fillRect(ox + 2 * scale, oy + 2 * scale, coreSize, coreSize);
-      }
+      // Core 3x3
+      ctx.fillStyle = eye.core;
+      ctx.fillRect(ox + 2 * scale, oy + 2 * scale, 3 * scale, 3 * scale);
     });
-
-    // 3. Center Ferry Badge
-    if (moduleCount >= 25) {
-      const cx = canvasSize / 2;
-      const cy = canvasSize / 2;
-      const badgeR = 2.2 * scale;
-
-      ctx.fillStyle = '#ffffff';
-      ctx.strokeStyle = '#121316';
-      ctx.lineWidth = 2;
-      ctx.beginPath();
-      ctx.arc(cx, cy, badgeR, 0, Math.PI * 2);
-      ctx.fill();
-      ctx.stroke();
-
-      ctx.fillStyle = primaryEyeColor;
-      ctx.beginPath();
-      ctx.moveTo(cx - 9, cy + 2);
-      ctx.lineTo(cx - 5, cy + 8);
-      ctx.lineTo(cx + 5, cy + 8);
-      ctx.lineTo(cx + 9, cy + 2);
-      ctx.closePath();
-      ctx.fill();
-
-      ctx.fillStyle = '#121316';
-      ctx.fillRect(cx - 4, cy - 3, 8, 4);
-      ctx.fillStyle = accentEyeColor;
-      ctx.fillRect(cx + 1, cy - 6, 3, 3);
-    }
 
     container.appendChild(canvas);
   }
 
-  // --- MULTI-FRAME ANIMATED QR ENGINE ---
+  // --- STATIC SINGLE QR DISPLAY ---
   function displayPayloadAsQR(containerId, frameBadgeId, dotsId, payload) {
     const container = $(containerId);
     const badge = $(frameBadgeId);
@@ -502,50 +470,10 @@
       state.qrCycleTimer = null;
     }
 
-    if (payload.length <= 320) {
-      renderAestheticQR(container, `SF:1:1:s:${payload}`);
-      if (badge) badge.classList.add('hidden');
-      if (dotsWrap) dotsWrap.classList.add('hidden');
-      return;
-    }
+    if (badge) badge.classList.add('hidden');
+    if (dotsWrap) dotsWrap.classList.add('hidden');
 
-    const chunkSize = 230;
-    const totalFrames = Math.ceil(payload.length / chunkSize);
-    const sessionId = Math.random().toString(36).substring(2, 6);
-    const frames = [];
-
-    for (let i = 0; i < totalFrames; i++) {
-      const chunk = payload.substring(i * chunkSize, (i + 1) * chunkSize);
-      frames.push(`SF:${i + 1}:${totalFrames}:${sessionId}:${chunk}`);
-    }
-
-    if (badge) {
-      badge.classList.remove('hidden');
-      badge.textContent = `Frame 1 of ${totalFrames}`;
-    }
-
-    if (dotsWrap) {
-      dotsWrap.classList.remove('hidden');
-      dotsWrap.innerHTML = frames.map((_, i) => `<span class="qr-dot ${i === 0 ? 'active' : ''}"></span>`).join('');
-    }
-
-    let currentIdx = 0;
-    renderAestheticQR(container, frames[0]);
-
-    state.qrCycleTimer = setInterval(() => {
-      currentIdx = (currentIdx + 1) % totalFrames;
-      renderAestheticQR(container, frames[currentIdx]);
-      if (badge) {
-        badge.textContent = `Frame ${currentIdx + 1} of ${totalFrames}`;
-      }
-      if (dotsWrap) {
-        const dots = dotsWrap.querySelectorAll('.qr-dot');
-        dots.forEach((d, idx) => {
-          if (idx === currentIdx) d.classList.add('active');
-          else d.classList.remove('active');
-        });
-      }
-    }, 360);
+    renderAestheticQR(container, payload);
   }
 
   // --- CAMERA SCANNER LOOP ---
@@ -553,8 +481,6 @@
     const video = $(videoElId);
     const statusEl = $(statusElId);
     if (!video || !window.jsQR) return;
-
-    state.scannerAccumulator = {};
 
     try {
       if (statusEl) statusEl.textContent = 'Requesting camera access...';
@@ -564,61 +490,44 @@
       state.scannerStream = stream;
       video.srcObject = stream;
       video.setAttribute('playsinline', 'true');
+      video.setAttribute('webkit-playsinline', 'true');
+      video.muted = true;
       await video.play();
 
-      if (statusEl) statusEl.innerHTML = '<span class="status-indicator-dot"></span> Camera active. Align QR in frame.';
+      if (statusEl) statusEl.innerHTML = '<span class="status-indicator-dot"></span> Camera active. Point at QR code.';
 
       const scanCanvas = document.createElement('canvas');
       const scanCtx = scanCanvas.getContext('2d', { willReadFrequently: true });
 
       function tick() {
-        if (video.readyState === video.HAVE_ENOUGH_DATA) {
-          scanCanvas.width = video.videoWidth;
-          scanCanvas.height = video.videoHeight;
-          scanCtx.drawImage(video, 0, 0, scanCanvas.width, scanCanvas.height);
+        if (video.readyState >= video.HAVE_CURRENT_DATA && video.videoWidth > 0) {
+          const vw = video.videoWidth;
+          const vh = video.videoHeight;
+          const maxDim = 480;
+          const scale = Math.min(1, maxDim / Math.max(vw, vh));
+          const sw = Math.round(vw * scale);
+          const sh = Math.round(vh * scale);
 
-          const imageData = scanCtx.getImageData(0, 0, scanCanvas.width, scanCanvas.height);
-          const code = jsQR(imageData.data, imageData.width, imageData.height, {
-            inversionAttempts: 'dontInvert',
+          if (scanCanvas.width !== sw || scanCanvas.height !== sh) {
+            scanCanvas.width = sw;
+            scanCanvas.height = sh;
+          }
+
+          scanCtx.drawImage(video, 0, 0, sw, sh);
+          const imageData = scanCtx.getImageData(0, 0, sw, sh);
+          const code = jsQR(imageData.data, sw, sh, {
+            inversionAttempts: 'attemptBoth',
           });
 
-          if (code && code.data) {
+          if (code && code.data && code.data.trim()) {
             const raw = code.data.trim();
-            if (raw.startsWith('SF:')) {
-              const parts = raw.split(':');
-              const partNum = parseInt(parts[1], 10);
-              const totalParts = parseInt(parts[2], 10);
-              const sid = parts[3];
-              const chunk = parts.slice(4).join(':');
-
-              if (!isNaN(partNum) && !isNaN(totalParts)) {
-                if (!state.scannerAccumulator[sid]) {
-                  state.scannerAccumulator[sid] = { total: totalParts, parts: {} };
-                }
-                state.scannerAccumulator[sid].parts[partNum] = chunk;
-                const collected = Object.keys(state.scannerAccumulator[sid].parts).length;
-
-                if (statusEl) {
-                  statusEl.innerHTML = `<span class="status-indicator-dot"></span> Scanning: frame ${collected} of ${totalParts} (${Math.round((collected / totalParts) * 100)}%)`;
-                }
-
-                if (collected === totalParts) {
-                  let fullToken = '';
-                  for (let p = 1; p <= totalParts; p++) {
-                    fullToken += state.scannerAccumulator[sid].parts[p];
-                  }
-                  stopCameraScanner();
-                  playChime([659.25, 783.99]);
-                  onPayloadResolved(fullToken);
-                  return;
-                }
-              }
-            } else {
-              stopCameraScanner();
-              playChime([659.25, 783.99]);
-              onPayloadResolved(raw);
-              return;
+            stopCameraScanner();
+            if (navigator.vibrate) {
+              try { navigator.vibrate(50); } catch (e) {}
             }
+            playChime([659.25, 783.99]);
+            onPayloadResolved(raw);
+            return;
           }
         }
         state.scannerRaf = requestAnimationFrame(tick);
@@ -797,39 +706,58 @@
     await waitForIceGathering(state.pc, 2500);
 
     const fullOfferSdp = state.pc.localDescription.sdp;
-    const compressed = await compressSDP(fullOfferSdp);
+    const compressed = compressSDP(fullOfferSdp);
+    const offerToken = 'SNAP_OFFER:' + compressed;
+    state.currentOfferToken = offerToken;
 
-    displayPayloadAsQR('sender-qr-canvas-wrap', 'sender-qr-frame-badge', 'sender-qr-dots', compressed);
+    displayPayloadAsQR('sender-qr-canvas-wrap', 'sender-qr-frame-badge', 'sender-qr-dots', offerToken);
 
-    if (statusEl) statusEl.textContent = 'Ready! Scan with Receiver camera.';
+    if (statusEl) {
+      statusEl.innerHTML = '<span class="status-indicator-dot"></span> Ready! Scan QR or copy code on Receiver.';
+    }
+
+    const textArea = $('offer-text-area');
+    if (textArea) textArea.value = offerToken;
 
     const copyBtn = $('btn-copy-offer');
     if (copyBtn) {
       copyBtn.onclick = () => {
-        navigator.clipboard.writeText(compressed).then(() => {
-          showToast('Offer code copied to clipboard!');
-        }).catch(() => {
-          showToast('Code ready in text box below');
-        });
+        copyToClipboard(offerToken, 'Offer code copied! Paste it on Receiver.');
       };
     }
 
     const toggleTextBtn = $('btn-toggle-offer-text');
     const textBox = $('offer-text-box');
-    const textArea = $('offer-text-area');
-    if (toggleTextBtn && textBox && textArea) {
-      textArea.value = compressed;
+    if (toggleTextBtn && textBox) {
       toggleTextBtn.onclick = () => {
-        textBox.classList.toggle('hidden');
+        const isHidden = textBox.classList.toggle('hidden');
+        const span = toggleTextBtn.querySelector('span');
+        if (span) span.textContent = isHidden ? 'View code text' : 'Hide code text';
+        if (!isHidden && textArea) {
+          textArea.focus();
+          textArea.select();
+        }
       };
     }
   }
 
   async function applyReceiverAnswer(answerToken) {
     try {
-      const answerSdp = await decompressSDP(answerToken);
+      answerToken = (answerToken || '').trim();
+      if (!answerToken) {
+        showToast('Empty answer code');
+        return;
+      }
+      if (answerToken.startsWith('SNAP_OFFER:') || answerToken.startsWith('SF1_OFFER:')) {
+        showToast('That is an Offer code! Sender needs the Answer code from Receiver.');
+        return;
+      }
+      const answerSdp = decompressSDP(answerToken);
+      if (!answerSdp || !answerSdp.includes('v=0')) {
+        throw new Error('Invalid SDP answer content');
+      }
       await state.pc.setRemoteDescription({ type: 'answer', sdp: answerSdp });
-      showToast('Answer applied! Connecting...');
+      showToast('Answer applied! Connecting devices...');
     } catch (err) {
       console.error('[Sender] Failed to apply answer:', err);
       showToast('Invalid answer code. Please re-scan or re-paste.');
@@ -852,6 +780,16 @@
   async function handleScannedOffer(offerToken) {
     state.role = 'receiver';
     try {
+      offerToken = (offerToken || '').trim();
+      if (!offerToken) {
+        showToast('Empty offer code');
+        return;
+      }
+      if (offerToken.startsWith('SNAP_ANSWER:') || offerToken.startsWith('SF1_ANSWER:')) {
+        showToast('That is an Answer code! Receiver needs the Offer code from Sender.');
+        return;
+      }
+
       $('receiver-phase-scan').classList.add('hidden');
       $('receiver-phase-answer').classList.remove('hidden');
       $('recv-step-pill-1').classList.remove('active');
@@ -860,7 +798,10 @@
       const statusEl = $('receiver-qr-status');
       if (statusEl) statusEl.textContent = 'Generating local WebRTC answer...';
 
-      const offerSdp = await decompressSDP(offerToken);
+      const offerSdp = decompressSDP(offerToken);
+      if (!offerSdp || !offerSdp.includes('v=0')) {
+        throw new Error('Invalid SDP offer content');
+      }
 
       state.pc = createPeerConnection(false, state.allowStun);
       state.pc.ondatachannel = (e) => {
@@ -874,20 +815,37 @@
       await waitForIceGathering(state.pc, 2500);
 
       const fullAnswerSdp = state.pc.localDescription.sdp;
-      const compressedAnswer = await compressSDP(fullAnswerSdp);
+      const compressedAnswer = compressSDP(fullAnswerSdp);
+      const answerToken = 'SNAP_ANSWER:' + compressedAnswer;
+      state.currentAnswerToken = answerToken;
 
-      displayPayloadAsQR('receiver-qr-canvas-wrap', 'receiver-qr-frame-badge', 'receiver-qr-dots', compressedAnswer);
+      displayPayloadAsQR('receiver-qr-canvas-wrap', 'receiver-qr-frame-badge', 'receiver-qr-dots', answerToken);
 
-      if (statusEl) statusEl.textContent = 'Waiting for sender to scan answer...';
+      if (statusEl) {
+        statusEl.innerHTML = '<span class="status-indicator-dot"></span> Ready! Scan QR or copy code into Sender.';
+      }
+
+      const answerTextArea = $('answer-text-area');
+      if (answerTextArea) answerTextArea.value = answerToken;
 
       const copyBtn = $('btn-copy-answer');
       if (copyBtn) {
         copyBtn.onclick = () => {
-          navigator.clipboard.writeText(compressedAnswer).then(() => {
-            showToast('Answer code copied to clipboard!');
-          }).catch(() => {
-            showToast('Answer token ready');
-          });
+          copyToClipboard(answerToken, 'Answer code copied! Paste it into Sender.');
+        };
+      }
+
+      const toggleAnswerBtn = $('btn-toggle-answer-text');
+      const answerBox = $('answer-text-box');
+      if (toggleAnswerBtn && answerBox) {
+        toggleAnswerBtn.onclick = () => {
+          const isHidden = answerBox.classList.toggle('hidden');
+          const span = toggleAnswerBtn.querySelector('span');
+          if (span) span.textContent = isHidden ? 'View code text' : 'Hide code text';
+          if (!isHidden && answerTextArea) {
+            answerTextArea.focus();
+            answerTextArea.select();
+          }
         };
       }
     } catch (err) {
@@ -895,6 +853,8 @@
       showToast('Error processing offer code.');
       $('receiver-phase-scan').classList.remove('hidden');
       $('receiver-phase-answer').classList.add('hidden');
+      $('recv-step-pill-1').classList.add('active');
+      $('recv-step-pill-2').classList.remove('active');
     }
   }
 
@@ -1560,17 +1520,47 @@
 
     if (closePasteBtn && pasteModal) closePasteBtn.addEventListener('click', () => closeModal(pasteModal));
 
+    const btnPasteClipboard = $('btn-paste-clipboard');
+    if (btnPasteClipboard && pasteTextarea) {
+      btnPasteClipboard.addEventListener('click', async () => {
+        try {
+          if (navigator.clipboard && navigator.clipboard.readText) {
+            const clipText = await navigator.clipboard.readText();
+            if (clipText && clipText.trim()) {
+              pasteTextarea.value = clipText.trim();
+              showToast('Pasted from clipboard!');
+              return;
+            }
+          }
+        } catch (e) {
+          console.warn('[Clipboard] Read failed:', e);
+        }
+        pasteTextarea.focus();
+        showToast('Tap and hold textarea to paste');
+      });
+    }
+
     if (submitPasteBtn && pasteModal && pasteTextarea) {
       submitPasteBtn.addEventListener('click', () => {
         const text = pasteTextarea.value.trim();
         if (!text) {
-          showToast('Please paste a valid code');
+          showToast('Please enter or paste a valid code');
           return;
         }
-        closeModal(pasteModal);
+
         if (state.activePasteTarget === 'sender-answer') {
+          if (text.startsWith('SNAP_OFFER:') || text.startsWith('SF1_OFFER:')) {
+            showToast('That is an Offer code! Sender needs the Answer code from Receiver.');
+            return;
+          }
+          closeModal(pasteModal);
           applyReceiverAnswer(text);
         } else if (state.activePasteTarget === 'receiver-offer') {
+          if (text.startsWith('SNAP_ANSWER:') || text.startsWith('SF1_ANSWER:')) {
+            showToast('That is an Answer code! Receiver needs the Offer code from Sender.');
+            return;
+          }
+          closeModal(pasteModal);
           handleScannedOffer(text);
         }
       });

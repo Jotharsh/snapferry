@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snapferry-v1';
+const CACHE_NAME = 'snapferry-v2';
 const PRECACHE_URLS = [
   './',
   'index.html',
