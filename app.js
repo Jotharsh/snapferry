@@ -278,8 +278,9 @@
 
   // --- SDP COMPRESSION & DECOMPRESSION ---
   function compressSDP(sdp) {
+    // Split on \r\n OR \n, trim each line, drop unneeded attrs
     const minified = sdp
-      .split('\r\n')
+      .split(/\r?\n/)
       .map((l) => l.trim())
       .filter((line) => {
         if (!line) return false;
@@ -302,7 +303,7 @@
         const def = window.fflate.deflateSync(rawBytes, { level: 9 });
         return bytesToBase64Url(def);
       } catch (e) {
-        console.warn('[SDP] fflate deflate error, fallback to raw:', e);
+        console.warn('[SDP] fflate deflate failed, using raw base64:', e);
       }
     }
 
@@ -312,6 +313,8 @@
   function decompressSDP(token) {
     if (!token) return '';
     token = token.trim();
+
+    // Strip any known prefix
     if (token.startsWith('SNAP_OFFER:')) token = token.substring('SNAP_OFFER:'.length);
     else if (token.startsWith('SNAP_ANSWER:')) token = token.substring('SNAP_ANSWER:'.length);
     else if (token.startsWith('SF1_OFFER:')) token = token.substring('SF1_OFFER:'.length);
@@ -322,26 +325,38 @@
     }
     token = token.trim();
 
+    let text = '';
     try {
       const bytes = base64UrlToBytes(token);
       if (window.fflate && window.fflate.inflateSync) {
         try {
           const inf = window.fflate.inflateSync(bytes);
-          const text = new TextDecoder().decode(inf);
-          return text.split('\n').join('\r\n') + '\r\n';
+          text = new TextDecoder().decode(inf);
         } catch (e) {
-          // May be uncompressed raw SDP
+          // Not fflate-compressed; treat as raw base64 SDP
+          text = new TextDecoder().decode(bytes);
         }
+      } else {
+        text = new TextDecoder().decode(bytes);
       }
-      const rawText = new TextDecoder().decode(bytes);
-      return rawText.split('\n').join('\r\n') + '\r\n';
     } catch (err) {
-      console.warn('[SDP] Failed to decompress token:', err);
-      if (token.includes('v=0') || token.includes('m=')) {
-        return token.split('\n').join('\r\n') + '\r\n';
+      // Last resort: token might literally be the SDP (unencoded)
+      if (token.includes('v=0')) {
+        text = token;
+      } else {
+        console.error('[SDP] Cannot decode token:', err);
+        throw err;
       }
-      throw err;
     }
+
+    // Normalize line endings: strip any \r, then rejoin with \r\n
+    const sdp = text
+      .split(/\r?\n/)
+      .map((l) => l.trim())
+      .filter((l) => l)
+      .join('\r\n') + '\r\n';
+
+    return sdp;
   }
 
   // --- CLIPBOARD HELPER ---

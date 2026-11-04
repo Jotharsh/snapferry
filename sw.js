@@ -1,4 +1,4 @@
-const CACHE_NAME = 'snapferry-v2';
+const CACHE_NAME = 'snapferry-v3';
 const PRECACHE_URLS = [
   './',
   'index.html',
@@ -40,9 +40,26 @@ self.addEventListener('activate', (event) => {
 });
 
 self.addEventListener('fetch', (event) => {
-  // Only handle GET requests
   if (event.request.method !== 'GET') return;
 
+  // Network-first for JS/CSS so updates land immediately
+  const url = new URL(event.request.url);
+  const isAsset = /\.(js|css)(\?.*)?$/.test(url.pathname);
+
+  if (isAsset) {
+    event.respondWith(
+      fetch(event.request).then((response) => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, clone));
+        }
+        return response;
+      }).catch(() => caches.match(event.request))
+    );
+    return;
+  }
+
+  // Cache-first for everything else
   event.respondWith(
     caches.match(event.request).then((cached) => {
       if (cached) return cached;
@@ -56,7 +73,6 @@ self.addEventListener('fetch', (event) => {
         });
         return response;
       }).catch(() => {
-        // Fallback for HTML navigation when offline
         if (event.request.mode === 'navigate') {
           return caches.match('index.html');
         }
