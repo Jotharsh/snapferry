@@ -268,6 +268,8 @@
   }
 
   function base64UrlToBytes(str) {
+    // Strip ALL whitespace (newlines from clipboard word-wrap, spaces, tabs)
+    str = str.replace(/\s+/g, '');
     str = str.replace(/-/g, '+').replace(/_/g, '/');
     while (str.length % 4) str += '=';
     const bin = atob(str);
@@ -324,6 +326,9 @@
       token = parts.slice(4).join(':') || parts[parts.length - 1];
     }
     token = token.trim();
+
+    // Strip whitespace injected by clipboard word-wrap before base64 decode
+    token = token.replace(/\s+/g, '');
 
     let text = '';
     try {
@@ -775,7 +780,7 @@
       showToast('Answer applied! Connecting devices...');
     } catch (err) {
       console.error('[Sender] Failed to apply answer:', err);
-      showToast('Invalid answer code. Please re-scan or re-paste.');
+      showToast('Answer failed: ' + (err.message || err));
     }
   }
 
@@ -865,7 +870,7 @@
       }
     } catch (err) {
       console.error('[Receiver] Failed to process offer:', err);
-      showToast('Error processing offer code.');
+      showToast('Offer failed: ' + (err.message || err));
       $('receiver-phase-scan').classList.remove('hidden');
       $('receiver-phase-answer').classList.add('hidden');
       $('recv-step-pill-1').classList.add('active');
