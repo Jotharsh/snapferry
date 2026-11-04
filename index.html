@@ -1,0 +1,837 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, maximum-scale=1">
+  <title>Snapferry — Peer-to-Peer Photo &amp; Video Transfer</title>
+  <meta name="description" content="Send full-quality photos and videos directly between phones and laptops over local Wi-Fi. No cloud, no account, no server, and no upload.">
+  <meta name="theme-color" content="#4f46e5">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Snapferry">
+
+  <!-- Icons -->
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="apple-touch-icon" href="apple-touch-icon.png">
+  <link rel="manifest" href="manifest.webmanifest">
+
+  <!-- Stylesheet -->
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <!-- Floating Hand-drawn Doodle Background Layer -->
+  <div class="doodle-layer" aria-hidden="true">
+    <svg class="doodle doodle-star-1" viewBox="0 0 40 40" width="40" height="40">
+      <path d="M20 2 L24 14 L37 17 L27 26 L30 38 L20 31 L9 38 L13 26 L3 17 L16 14 Z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+    </svg>
+    <svg class="doodle doodle-sparkle-1" viewBox="0 0 32 32" width="32" height="32">
+      <path d="M16 2 Q16 16 30 16 Q16 16 16 30 Q16 16 2 16 Q16 16 16 2" fill="none" stroke="currentColor" stroke-width="2.5"/>
+    </svg>
+    <svg class="doodle doodle-plane" viewBox="0 0 64 48" width="64" height="48">
+      <path d="M4 24 L58 4 L38 44 L28 28 L4 24 Z M28 28 L46 16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+    </svg>
+    <svg class="doodle doodle-heart" viewBox="0 0 36 36" width="36" height="36">
+      <path d="M18 32 C18 32 4 22 4 12 C4 6 9 3 14 3 C16.5 3 18 5 18 5 C18 5 19.5 3 22 3 C27 3 32 6 32 12 C32 22 18 32 18 32 Z" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+    </svg>
+    <svg class="doodle doodle-camera" viewBox="0 0 54 44" width="54" height="44">
+      <rect x="4" y="10" width="46" height="30" rx="7" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <path d="M16 10 L20 4 L34 4 L38 10" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+      <circle cx="27" cy="25" r="9" fill="none" stroke="currentColor" stroke-width="2.5"/>
+      <circle cx="42" cy="17" r="2.5" fill="currentColor"/>
+    </svg>
+    <svg class="doodle doodle-bolt" viewBox="0 0 32 48" width="32" height="48">
+      <polygon points="18,2 4,24 16,24 14,46 28,20 16,20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linejoin="round"/>
+    </svg>
+    <div class="doodle-note note-1">no cloud!</div>
+    <div class="doodle-note note-2">super fast ⚡</div>
+    <div class="doodle-note note-3">your photos stay yours</div>
+  </div>
+
+  <!-- App Header -->
+  <header class="app-header">
+    <div class="header-container">
+      <a href="#home" class="brand" id="brand-link" aria-label="Snapferry Home">
+        <img src="logo.svg" alt="Snapferry logo" class="brand-logo" width="38" height="38">
+        <span class="brand-text">Snapferry</span>
+      </a>
+
+      <div class="header-actions">
+        <button id="dev-mode-pill" class="pill-btn dev-pill hidden" title="Dev Test Mode active">
+          <span class="dot pulse"></span> Dev Mode
+        </button>
+        <button id="wifi-help-btn" class="pill-btn help-btn" title="Can't connect? Wi-Fi tips">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+          <span>Can't connect?</span>
+        </button>
+        <button id="theme-toggle-btn" class="icon-btn" aria-label="Toggle dark mode" title="Toggle theme">
+          <svg class="sun-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><circle cx="12" cy="12" r="5"/><line x1="12" y1="1" x2="12" y2="3"/><line x1="12" y1="21" x2="12" y2="23"/><line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/><line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/><line x1="1" y1="12" x2="3" y2="12"/><line x1="21" y1="12" x2="23" y2="12"/><line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/><line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/></svg>
+          <svg class="moon-icon" viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main View Container -->
+  <main class="main-content" id="main-content">
+    
+    <!-- SCREEN 1: HOME VIEW -->
+    <section id="screen-home" class="screen active">
+      <div class="hero-section">
+        <div class="hero-copy">
+          <div class="tag-badge">
+            <span class="tag-dot"></span> P2P WebRTC Local Ferry
+          </div>
+
+          <h1 class="hero-headline">
+            Send full-quality photos &amp; videos,
+            <span class="headline-highlight">
+              device to device.
+              <svg class="hand-underline" viewBox="0 0 280 20" preserveAspectRatio="none">
+                <path d="M4 14 Q 70 4, 140 12 T 276 8" fill="none" stroke="#f97316" stroke-width="6" stroke-linecap="round"/>
+              </svg>
+            </span>
+          </h1>
+
+          <p class="hero-subline">
+            Zero cloud. Zero logins. Zero compression. Direct air-gap transfer over your local Wi-Fi between iPhones, Androids, and laptops.
+          </p>
+
+          <!-- Chunky 3D Action Buttons -->
+          <div class="action-buttons-grid">
+            <div class="action-card send-card">
+              <div class="doodle-arrow send-arrow" aria-hidden="true">
+                <svg viewBox="0 0 60 50" width="50" height="42">
+                  <path d="M10 40 Q 25 15, 50 18 M40 10 L52 18 L44 28" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                <span class="arrow-caption">Start here!</span>
+              </div>
+              <button id="btn-goto-send" class="btn-3d btn-primary btn-hero">
+                <span class="btn-3d-top">
+                  <span class="btn-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M22 2L11 13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                  </span>
+                  <span class="btn-label-group">
+                    <span class="btn-title">Send photos</span>
+                    <span class="btn-subtitle">Pick files &amp; show QR</span>
+                  </span>
+                </span>
+              </button>
+            </div>
+
+            <div class="action-card receive-card">
+              <button id="btn-goto-receive" class="btn-3d btn-accent btn-hero">
+                <span class="btn-3d-top">
+                  <span class="btn-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  </span>
+                  <span class="btn-label-group">
+                    <span class="btn-title">Receive photos</span>
+                    <span class="btn-subtitle">Scan sender's QR</span>
+                  </span>
+                </span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Trust Chips Row -->
+          <div class="trust-chips">
+            <div class="trust-chip">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              <span>No cloud</span>
+            </div>
+            <div class="trust-chip">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              <span>No account</span>
+            </div>
+            <div class="trust-chip">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              <span>Original quality (EXIF kept)</span>
+            </div>
+            <div class="trust-chip">
+              <svg viewBox="0 0 20 20" width="16" height="16" fill="currentColor"><path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/></svg>
+              <span>Works offline</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- CSS 3D Scene (No WebGL) -->
+        <div class="hero-scene-wrapper" id="hero-3d-stage">
+          <div class="scene-3d" id="scene-3d-box">
+            <!-- Left Mockup: Sender Phone -->
+            <div class="phone-mockup phone-sender">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <div class="screen-header-bar">
+                  <span class="phone-status-dot"></span>
+                  <span class="phone-role-label">Sender</span>
+                </div>
+                <div class="mockup-gallery-preview">
+                  <div class="mini-photo-card p1"></div>
+                  <div class="mini-photo-card p2"></div>
+                  <div class="mini-photo-card p3"></div>
+                  <div class="mini-photo-card p4"></div>
+                </div>
+                <div class="mockup-dispatch-indicator">
+                  <div class="dispatch-beam"></div>
+                  <span class="dispatch-text">Transferring...</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Flying 3D Cards along curved arc -->
+            <div class="flying-arc-container" aria-hidden="true">
+              <svg class="arc-svg" viewBox="0 0 400 180">
+                <path id="flying-path" d="M 60 140 Q 200 10 340 140" fill="none" stroke="currentColor" stroke-width="3" stroke-dasharray="6 8" stroke-linecap="round"/>
+              </svg>
+              <!-- Flying cards with keyframe animations -->
+              <div class="flying-card card-flight-1">
+                <div class="flying-photo-inner">
+                  <div class="fp-sky"></div>
+                  <div class="fp-sun"></div>
+                  <div class="fp-mountain"></div>
+                </div>
+              </div>
+              <div class="flying-card card-flight-2">
+                <div class="flying-photo-inner video-card">
+                  <div class="fp-play">▶</div>
+                  <span class="fp-tag">4K RAW</span>
+                </div>
+              </div>
+              <div class="flying-card card-flight-3">
+                <div class="flying-photo-inner">
+                  <div class="fp-sunset"></div>
+                  <div class="fp-badge">EXIF</div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Right Mockup: Receiver Phone -->
+            <div class="phone-mockup phone-receiver">
+              <div class="phone-notch"></div>
+              <div class="phone-screen">
+                <div class="screen-header-bar">
+                  <span class="phone-status-dot online"></span>
+                  <span class="phone-role-label">Receiver</span>
+                </div>
+                <div class="mockup-receiving-tray">
+                  <div class="tray-slot s1 filled"></div>
+                  <div class="tray-slot s2 filled"></div>
+                  <div class="tray-slot s3 receiving">
+                    <span class="mini-pulse"></span>
+                  </div>
+                </div>
+                <div class="mockup-rx-stat">
+                  <span class="rx-speed">38.4 MB/s</span>
+                  <div class="rx-bar"><div class="rx-fill"></div></div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="scene-caption-hint">
+            <span class="hint-icon">✦</span> Move pointer or tilt device to explore in 3D
+          </div>
+        </div>
+      </div>
+
+      <!-- Below the fold: How it works -->
+      <section class="section-how" id="how-it-works">
+        <div class="section-heading-group">
+          <span class="section-badge">Simple 3-step handshake</span>
+          <h2 class="section-title">How Snapferry works</h2>
+          <p class="section-subtitle">No signaling server, no relay. Your devices exchange direct connection tokens via QR codes.</p>
+        </div>
+
+        <div class="steps-grid">
+          <div class="step-card">
+            <div class="step-number">1</div>
+            <div class="step-icon-wrap">
+              <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2.2" fill="none"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M7 17h.01M17 17h.01M7 7h.01M17 7h.01"/></svg>
+            </div>
+            <h3 class="step-title">Pick role &amp; generate QR</h3>
+            <p class="step-body">Sender picks photos and creates a compact WebRTC offer encoded into a clean, scannable QR code.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">2</div>
+            <div class="step-icon-wrap">
+              <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2.2" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+            </div>
+            <h3 class="step-title">Scan to complete handshake</h3>
+            <p class="step-body">Receiver scans the code with camera, creates an answer code, and sender scans it back. No internet needed.</p>
+          </div>
+
+          <div class="step-card">
+            <div class="step-number">3</div>
+            <div class="step-icon-wrap">
+              <svg viewBox="0 0 24 24" width="32" height="32" stroke="currentColor" stroke-width="2.2" fill="none"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m8 17 4 4 4-4"/></svg>
+            </div>
+            <h3 class="step-title">Ferry files at full Wi-Fi speed</h3>
+            <p class="step-body">Data channels open peer-to-peer. Raw bytes stream at up to 80+ MB/s untouched with original metadata.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- FAQ Section -->
+      <section class="section-faq" id="faq">
+        <div class="section-heading-group">
+          <span class="section-badge">Questions answered</span>
+          <h2 class="section-title">Frequently asked questions</h2>
+        </div>
+
+        <div class="faq-list">
+          <details class="faq-item" open>
+            <summary class="faq-question">
+              <span>Do my photos get uploaded to any server or cloud?</span>
+              <span class="faq-toggle-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p>Never. Snapferry has zero servers, zero accounts, and zero cloud storage. Photos and videos stream directly from device memory to device memory through an encrypted WebRTC data channel over your local network.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>Do both devices need to be on the same Wi-Fi?</span>
+              <span class="faq-toggle-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p>Yes. Both devices must be on the same Wi-Fi network, or one device connected to the other's personal hotspot. If your router has "Client Isolation" turned on (common in hotels or coffee shops), personal hotspot is the easiest fix.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>How does saving photos work on iPhone Safari?</span>
+              <span class="faq-toggle-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p>Because iOS Safari security prevents websites from writing directly into the Apple Photos camera roll, Snapferry triggers the native iOS Share Sheet (<code>navigator.share</code>) so you can tap <strong>"Save Image"</strong> or <strong>"Save Video"</strong> with one touch. You can also download as a clean ZIP.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>Is there a file size limit?</span>
+              <span class="faq-toggle-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p>No artificial limit. Our custom transfer engine slices files into 16 KB chunks and applies backpressure to pause transmission when the buffer fills up, allowing large multi-gigabyte 4K videos or batches of 50+ photos without crashing browser memory.</p>
+            </div>
+          </details>
+
+          <details class="faq-item">
+            <summary class="faq-question">
+              <span>Can I use this between two browser tabs on the same computer?</span>
+              <span class="faq-toggle-icon">+</span>
+            </summary>
+            <div class="faq-answer">
+              <p>Yes! Every step includes a "Copy code / Paste code" button so laptops without webcams or two tabs on the same machine can pair seamlessly without camera access.</p>
+            </div>
+          </details>
+        </div>
+      </section>
+
+      <!-- Install App Banner & Footer -->
+      <section class="section-install" id="install-cta">
+        <div class="install-card">
+          <div class="install-visual">
+            <img src="icons/icon-192.png" alt="Snapferry App" width="72" height="72" class="install-icon">
+          </div>
+          <div class="install-info">
+            <h3 class="install-title">Install Snapferry on your device</h3>
+            <p class="install-text">Works 100% offline once opened. Add to Home Screen for instant air-drop style sharing anytime.</p>
+          </div>
+          <div class="install-action">
+            <button id="btn-install-pwa" class="btn-3d btn-primary btn-install">
+              <span class="btn-3d-top">Install App</span>
+            </button>
+            <div id="ios-install-guide" class="ios-install-guide hidden">
+              <span>Tap <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor"><path d="M12 2l4 4h-3v8h-2V6H8l4-4zm8 10v8H4v-8H2v10h20V12h-2z"/></svg> <strong>Share</strong> then <strong>"Add to Home Screen"</strong></span>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <footer class="app-footer">
+        <div class="footer-container">
+          <div class="footer-brand">
+            <img src="logo.svg" alt="Snapferry" width="24" height="24">
+            <span>Snapferry</span>
+          </div>
+          <div class="footer-meta">
+            <span>Peer-to-Peer Local WebRTC Transfer</span>
+            <span class="footer-dot">•</span>
+            <a href="?dev=1" id="footer-dev-link">Dev Test Mode</a>
+          </div>
+        </div>
+      </footer>
+    </section>
+
+    <!-- SCREEN 2: SENDER VIEW -->
+    <section id="screen-send" class="screen">
+      <div class="screen-container">
+        <!-- Back navigation & header -->
+        <div class="screen-nav">
+          <button class="nav-back-btn" data-target="home">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="15 18 9 12 15 6"/></svg>
+            <span>Back</span>
+          </button>
+          <div class="step-progress-indicator">
+            <span class="step-pill active" id="send-step-pill-1">1. Pick</span>
+            <span class="step-divider">→</span>
+            <span class="step-pill" id="send-step-pill-2">2. Pair QR</span>
+            <span class="step-divider">→</span>
+            <span class="step-pill" id="send-step-pill-3">3. Ferry</span>
+          </div>
+        </div>
+
+        <!-- Sender Sub-Step 1: Pick Files -->
+        <div class="sender-phase" id="sender-phase-pick">
+          <div class="phase-header">
+            <h2 class="phase-title">Select photos &amp; videos to send</h2>
+            <p class="phase-desc">Original quality, EXIF kept. Pick as many files as you like.</p>
+          </div>
+
+          <div class="drop-zone" id="sender-drop-zone">
+            <input type="file" id="sender-file-input" multiple accept="image/*,video/*" class="file-input-hidden">
+            <div class="drop-zone-content">
+              <div class="drop-zone-icon">
+                <svg viewBox="0 0 48 48" width="48" height="48" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M8 32l10-10 8 8 10-10 6 6"/><circle cx="16" cy="14" r="4"/><rect x="4" y="6" width="40" height="36" rx="6"/></svg>
+              </div>
+              <h3 class="drop-title">Drop photos or tap to browse</h3>
+              <p class="drop-sub">Multi-select photos &amp; videos (any size)</p>
+              <button type="button" class="btn-3d btn-primary btn-sm drop-browse-btn" onclick="document.getElementById('sender-file-input').click()">
+                <span class="btn-3d-top">Choose Files</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Staged files summary -->
+          <div class="staged-files-panel hidden" id="staged-files-panel">
+            <div class="staged-header">
+              <span class="staged-count" id="staged-count-label">0 files selected</span>
+              <span class="staged-size" id="staged-size-label">0 MB</span>
+              <button class="btn-text text-danger" id="btn-clear-staged">Clear</button>
+            </div>
+            <div class="staged-files-list" id="staged-files-list"></div>
+            
+            <button id="btn-create-offer" class="btn-3d btn-primary btn-block">
+              <span class="btn-3d-top">
+                <span>Continue to Pairing Code →</span>
+              </span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Sender Sub-Step 2: Show Offer QR & Scan Receiver's Answer -->
+        <div class="sender-phase hidden" id="sender-phase-pair">
+          <div class="phase-header">
+            <h2 class="phase-title">Step 1 of 2: Show this code to Receiver</h2>
+            <p class="phase-desc">Point receiver device camera at this code, or copy the code below.</p>
+          </div>
+
+          <!-- Polaroid-style QR container -->
+          <div class="polaroid-card">
+            <div class="polaroid-photo-area">
+              <div id="sender-qr-canvas-wrap" class="qr-canvas-wrap">
+                <!-- QR Code generated here -->
+                <div class="qr-loading-spinner" id="sender-qr-spinner">
+                  <div class="spinner-ferry"></div>
+                  <span>Generating local WebRTC offer...</span>
+                </div>
+              </div>
+              <div class="qr-frame-badge hidden" id="sender-qr-frame-badge">Frame 1/1</div>
+            </div>
+            <div class="polaroid-caption">
+              <span class="polaroid-title">Snapferry Sender Handshake</span>
+              <span class="polaroid-sub" id="sender-qr-status">Gathering network routes...</span>
+            </div>
+          </div>
+
+          <!-- Controls under QR -->
+          <div class="qr-fallback-controls">
+            <button id="btn-copy-offer" class="btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copy code</span>
+            </button>
+            <button id="btn-toggle-offer-text" class="btn-secondary btn-sm">
+              <span>View code text</span>
+            </button>
+          </div>
+
+          <div id="offer-text-box" class="code-box-drawer hidden">
+            <textarea id="offer-text-area" readonly class="code-textarea" rows="4"></textarea>
+          </div>
+
+          <!-- Optional Public STUN helper toggle -->
+          <div class="stun-toggle-card">
+            <label class="toggle-control">
+              <input type="checkbox" id="sender-stun-toggle">
+              <span class="toggle-slider"></span>
+              <span class="toggle-label-text">
+                <strong>Allow internet helper (STUN)</strong>
+                <span class="toggle-sub">Optional. Not needed on same Wi-Fi or hotspot.</span>
+              </span>
+            </label>
+          </div>
+
+          <!-- Receiver answer section -->
+          <div class="pair-next-action-card">
+            <div class="action-card-header">
+              <span class="badge-number">2</span>
+              <h3 class="card-title">Now, scan Receiver's QR code</h3>
+            </div>
+            <p class="card-subtitle">Once receiver scans your code above, their screen will show an Answer QR.</p>
+            <div class="pair-btn-row">
+              <button id="btn-sender-open-scanner" class="btn-3d btn-accent">
+                <span class="btn-3d-top">
+                  <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2.5" fill="none"><path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/><circle cx="12" cy="13" r="4"/></svg>
+                  <span>Scan Receiver QR</span>
+                </span>
+              </button>
+              <button id="btn-sender-paste-answer" class="btn-secondary">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+                <span>Paste Answer</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 3: RECEIVER VIEW -->
+    <section id="screen-receive" class="screen">
+      <div class="screen-container">
+        <!-- Back navigation -->
+        <div class="screen-nav">
+          <button class="nav-back-btn" data-target="home">
+            <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2.5" fill="none"><polyline points="15 18 9 12 15 6"/></svg>
+            <span>Back</span>
+          </button>
+          <div class="step-progress-indicator">
+            <span class="step-pill active" id="recv-step-pill-1">1. Scan</span>
+            <span class="step-divider">→</span>
+            <span class="step-pill" id="recv-step-pill-2">2. Answer</span>
+            <span class="step-divider">→</span>
+            <span class="step-pill" id="recv-step-pill-3">3. Receive</span>
+          </div>
+        </div>
+
+        <!-- Receiver Step 1: Scan Sender Offer -->
+        <div class="receiver-phase" id="receiver-phase-scan">
+          <div class="phase-header">
+            <h2 class="phase-title">Scan Sender's QR code</h2>
+            <p class="phase-desc">Point your camera at the QR code displayed on the sender's device.</p>
+          </div>
+
+          <!-- Camera scanner viewport -->
+          <div class="scanner-container" id="receiver-scanner-container">
+            <div class="scanner-frame">
+              <video id="receiver-video" playsinline muted class="camera-video"></video>
+              <div class="scanner-overlay">
+                <div class="reticle-corner top-left"></div>
+                <div class="reticle-corner top-right"></div>
+                <div class="reticle-corner bottom-left"></div>
+                <div class="reticle-corner bottom-right"></div>
+                <div class="scanner-laser"></div>
+              </div>
+            </div>
+            <div class="scanner-status" id="receiver-scan-status">
+              <span class="status-indicator-dot"></span> Camera ready. Align QR code inside frame.
+            </div>
+          </div>
+
+          <div class="scanner-actions">
+            <button id="btn-recv-paste-code" class="btn-secondary btn-block">
+              <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1"/></svg>
+              <span>Or Paste Sender's Code</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Receiver Step 2: Show Answer QR -->
+        <div class="receiver-phase hidden" id="receiver-phase-answer">
+          <div class="phase-header">
+            <h2 class="phase-title">Almost connected! Show this code to Sender</h2>
+            <p class="phase-desc">Sender scans this answer to open the direct channel.</p>
+          </div>
+
+          <div class="polaroid-card">
+            <div class="polaroid-photo-area">
+              <div id="receiver-qr-canvas-wrap" class="qr-canvas-wrap">
+                <div class="qr-loading-spinner" id="receiver-qr-spinner">
+                  <div class="spinner-ferry"></div>
+                  <span>Generating WebRTC answer...</span>
+                </div>
+              </div>
+              <div class="qr-frame-badge hidden" id="receiver-qr-frame-badge">Frame 1/1</div>
+            </div>
+            <div class="polaroid-caption">
+              <span class="polaroid-title">Snapferry Answer Handshake</span>
+              <span class="polaroid-sub" id="receiver-qr-status">Waiting for sender scan...</span>
+            </div>
+          </div>
+
+          <div class="qr-fallback-controls">
+            <button id="btn-copy-answer" class="btn-secondary btn-sm">
+              <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2" fill="none"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              <span>Copy answer code</span>
+            </button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 4: TRANSFER IN PROGRESS VIEW -->
+    <section id="screen-transfer" class="screen">
+      <div class="screen-container transfer-container">
+        <!-- Live Connection Celebration Header -->
+        <div class="transfer-header">
+          <div class="connected-badge">
+            <span class="badge-dot pulse"></span>
+            <span id="transfer-role-label">Direct DataChannel Connected</span>
+          </div>
+          <h2 class="transfer-title" id="transfer-title">Ferrying photos...</h2>
+          <p class="transfer-subtitle" id="transfer-subtitle">Keep both screens open and on this page.</p>
+        </div>
+
+        <!-- Animated Ferry & Waves Canvas/SVG -->
+        <div class="ferry-transfer-stage" aria-hidden="true">
+          <svg class="ferry-anim-svg" viewBox="0 0 400 140">
+            <!-- Waves -->
+            <path class="wave-path back-wave" d="M 0 100 Q 50 85 100 100 T 200 100 T 300 100 T 400 100 T 500 100" fill="none" stroke="#6366f1" stroke-width="6"/>
+            <path class="wave-path front-wave" d="M 0 115 Q 60 95 120 115 T 240 115 T 360 115 T 480 115" fill="none" stroke="#10b981" stroke-width="8"/>
+            <!-- Sailing Ferry Boat -->
+            <g class="sailing-ferry" id="sailing-ferry-group">
+              <!-- Ferry hull -->
+              <path d="M 170 88 L 185 106 L 245 106 L 260 88 Z" fill="#4338ca" stroke="#121316" stroke-width="3"/>
+              <path d="M 175 92 L 182 101 L 248 101 L 255 92 Z" fill="#f97316"/>
+              <!-- Cabin -->
+              <rect x="195" y="70" width="38" height="18" rx="3" fill="#ffffff" stroke="#121316" stroke-width="3"/>
+              <rect x="200" y="74" width="7" height="7" rx="1" fill="#38bdf8"/>
+              <rect x="212" y="74" width="7" height="7" rx="1" fill="#38bdf8"/>
+              <rect x="224" y="74" width="7" height="7" rx="1" fill="#38bdf8"/>
+              <!-- Funnel -->
+              <rect x="220" y="61" width="7" height="9" fill="#f97316" stroke="#121316" stroke-width="2"/>
+              <!-- Puffs -->
+              <circle cx="228" cy="54" r="3" fill="#e2e8f0" stroke="#121316" stroke-width="1.5" class="puff-1"/>
+              <circle cx="234" cy="47" r="4" fill="#e2e8f0" stroke="#121316" stroke-width="1.5" class="puff-2"/>
+            </g>
+          </svg>
+        </div>
+
+        <!-- Transfer Metrics & Progress Card -->
+        <div class="metrics-card">
+          <div class="metrics-top-row">
+            <div class="metric-item">
+              <span class="metric-label">Transfer Speed</span>
+              <span class="metric-val" id="metric-speed">0.0 MB/s</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Progress</span>
+              <span class="metric-val" id="metric-percent">0%</span>
+            </div>
+            <div class="metric-item">
+              <span class="metric-label">Time Remaining</span>
+              <span class="metric-val" id="metric-eta">--:--</span>
+            </div>
+          </div>
+
+          <!-- Overall Progress Bar -->
+          <div class="progress-bar-wrap">
+            <div class="progress-bar-fill" id="overall-progress-bar" style="width: 0%"></div>
+          </div>
+
+          <div class="metrics-bottom-row">
+            <span class="bytes-counter" id="metric-bytes">0 MB of 0 MB</span>
+            <span class="files-counter" id="metric-files">File 0 of 0</span>
+          </div>
+        </div>
+
+        <!-- Active File Info -->
+        <div class="active-file-card">
+          <div class="active-file-info">
+            <div class="file-icon" id="active-file-icon">📸</div>
+            <div class="file-names-group">
+              <div class="active-filename" id="active-filename">Preparing transfer...</div>
+              <div class="active-file-size" id="active-filesize">0 KB</div>
+            </div>
+          </div>
+          <div class="active-file-progress-bar">
+            <div class="active-file-progress-fill" id="active-file-bar" style="width: 0%"></div>
+          </div>
+        </div>
+
+        <!-- Screen Wake Lock Alert Notice -->
+        <div class="wake-lock-notice" id="wake-lock-notice">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 2a10 10 0 100 20 10 10 0 000-20zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/></svg>
+          <span>Screen Wake Lock active. Keep this browser tab open until ferry completes.</span>
+        </div>
+
+        <!-- Cancel / Disconnect Controls -->
+        <div class="transfer-actions">
+          <button id="btn-cancel-transfer" class="btn-secondary text-danger">Cancel Transfer</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- SCREEN 5: GALLERY & SAVE VIEW -->
+    <section id="screen-gallery" class="screen">
+      <div class="screen-container">
+        <div class="gallery-header">
+          <div class="gallery-success-badge">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+            <span>Ferry Complete!</span>
+          </div>
+          <h2 class="gallery-title" id="gallery-title">Received Files</h2>
+          <p class="gallery-subtitle" id="gallery-subtitle">Tap any photo to preview, or save directly to your device.</p>
+        </div>
+
+        <!-- iPhone explanation callout -->
+        <div class="info-callout ios-save-callout" id="ios-save-notice">
+          <div class="callout-icon">💡</div>
+          <div class="callout-body">
+            <strong>iPhone tip:</strong> Browsers cannot write directly to the Photos library. Tap <strong>"Save to Device"</strong> to open the iOS share sheet, then tap <strong>"Save Image"</strong>.
+          </div>
+        </div>
+
+        <!-- Gallery Action Bar -->
+        <div class="gallery-actions-bar">
+          <div class="select-all-group">
+            <label class="checkbox-control">
+              <input type="checkbox" id="gallery-select-all" checked>
+              <span class="checkbox-custom"></span>
+              <span class="checkbox-label" id="gallery-selected-label">Select all (0)</span>
+            </label>
+          </div>
+          <div class="save-buttons-group">
+            <button id="btn-gallery-share" class="btn-3d btn-primary btn-sm">
+              <span class="btn-3d-top">
+                <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                <span>Save to Device</span>
+              </span>
+            </button>
+            <button id="btn-gallery-zip" class="btn-secondary btn-sm" title="Download all selected files in a single uncompressed ZIP archive">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span>Download ZIP</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Grid of Received Photos & Videos -->
+        <div class="gallery-grid" id="gallery-grid"></div>
+
+        <div class="gallery-footer-actions">
+          <button class="btn-secondary" data-target="home">Back to Home</button>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <!-- MODAL: Wi-Fi & Connection Help Sheet -->
+  <div id="modal-wifi-help" class="modal-overlay hidden" aria-hidden="true" role="dialog">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Can't connect? Quick checklist</h3>
+        <button class="modal-close-btn" id="btn-close-wifi-help" aria-label="Close help">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="help-tip-row">
+          <div class="tip-icon">📶</div>
+          <div class="tip-text">
+            <strong>Same Wi-Fi network:</strong> Make sure both devices are connected to the exact same Wi-Fi router or access point (not one on 5GHz guest and one on private).
+          </div>
+        </div>
+        <div class="help-tip-row">
+          <div class="tip-icon">🛡️</div>
+          <div class="tip-text">
+            <strong>Turn off VPNs:</strong> VPN apps (iCloud Private Relay, NordVPN, Tailscale, etc.) route your traffic away from the local subnet. Turn them off temporarily.
+          </div>
+        </div>
+        <div class="help-tip-row">
+          <div class="tip-icon">🚫</div>
+          <div class="tip-text">
+            <strong>Client Isolation:</strong> Many public Wi-Fi networks (hotels, cafes, schools) intentionally block devices from seeing each other.
+          </div>
+        </div>
+        <div class="help-tip-row">
+          <div class="tip-icon">⚡</div>
+          <div class="tip-text">
+            <strong>Best solution: Personal Hotspot!</strong> Turn on Personal Hotspot on one phone and connect the other phone or laptop to it. This always works 100% of the time, completely offline!
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-3d btn-primary btn-block" id="btn-modal-dismiss">
+          <span class="btn-3d-top">Got it!</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Paste Code Manual Handshake -->
+  <div id="modal-paste-code" class="modal-overlay hidden" aria-hidden="true" role="dialog">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title" id="paste-modal-title">Paste handshake code</h3>
+        <button class="modal-close-btn" id="btn-close-paste-modal" aria-label="Close">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="modal-desc" id="paste-modal-desc">Paste the handshake token copied from the other device:</p>
+        <textarea id="paste-modal-textarea" class="code-textarea" rows="6" placeholder="Paste code here..."></textarea>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-3d btn-primary btn-block" id="btn-submit-paste-code">
+          <span class="btn-3d-top">Submit Code</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODAL: Single Photo Full-screen Preview -->
+  <div id="modal-lightbox" class="modal-overlay hidden" aria-hidden="true">
+    <div class="lightbox-content">
+      <button class="lightbox-close-btn" id="btn-close-lightbox">&times;</button>
+      <div id="lightbox-media-container" class="lightbox-media-wrap"></div>
+      <div class="lightbox-meta" id="lightbox-meta"></div>
+    </div>
+  </div>
+
+  <!-- QR Scan Modal for Sender -->
+  <div id="modal-sender-scanner" class="modal-overlay hidden" aria-hidden="true">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 class="modal-title">Scan Receiver's Answer QR</h3>
+        <button class="modal-close-btn" id="btn-close-sender-scanner">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="scanner-frame">
+          <video id="sender-scanner-video" playsinline muted class="camera-video"></video>
+          <div class="scanner-overlay">
+            <div class="reticle-corner top-left"></div>
+            <div class="reticle-corner top-right"></div>
+            <div class="reticle-corner bottom-left"></div>
+            <div class="reticle-corner bottom-right"></div>
+            <div class="scanner-laser"></div>
+          </div>
+        </div>
+        <div class="scanner-status" id="sender-scan-status">
+          <span class="status-indicator-dot"></span> Point camera at Receiver's Answer QR
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Vendor Scripts (Local Only, No CDNs) -->
+  <script src="vendor/qrcode.js"></script>
+  <script src="vendor/jsQR.js"></script>
+  <script src="vendor/fflate.js"></script>
+
+  <!-- Application Logic -->
+  <script src="app.js"></script>
+</body>
+</html>
