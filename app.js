@@ -614,24 +614,35 @@
         return;
       }
       let timeoutTimer = null;
-      function check(e) {
-        if (pc.iceGatheringState === 'complete' || (e && !e.candidate)) {
-          cleanup();
-          resolve();
+
+      function onIceCandidate(e) {
+        // e.candidate === null signals the end of ICE gathering for the generation
+        if (e.candidate === null) {
+          finish();
         }
       }
-      function cleanup() {
-        if (timeoutTimer) clearTimeout(timeoutTimer);
-        pc.removeEventListener('icecandidate', check);
-        pc.removeEventListener('icegatheringstatechange', check);
+
+      function onGatheringStateChange() {
+        if (pc.iceGatheringState === 'complete') {
+          finish();
+        }
       }
-      timeoutTimer = setTimeout(() => {
+
+      function finish() {
         cleanup();
         resolve();
-      }, timeoutMs);
+      }
 
-      pc.addEventListener('icecandidate', check);
-      pc.addEventListener('icegatheringstatechange', check);
+      function cleanup() {
+        if (timeoutTimer) clearTimeout(timeoutTimer);
+        pc.removeEventListener('icecandidate', onIceCandidate);
+        pc.removeEventListener('icegatheringstatechange', onGatheringStateChange);
+      }
+
+      timeoutTimer = setTimeout(finish, timeoutMs);
+
+      pc.addEventListener('icecandidate', onIceCandidate);
+      pc.addEventListener('icegatheringstatechange', onGatheringStateChange);
     });
   }
 
