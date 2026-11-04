@@ -1352,30 +1352,57 @@ a {
   font-size: 0.85rem;
 }
 
-/* Polaroid Card */
+/* Polaroid Card with Washi Tape & Aesthetic Sheen */
 .polaroid-card {
-  max-width: 380px;
-  margin: 0 auto 1.5rem;
+  position: relative;
+  max-width: 390px;
+  margin: 1.5rem auto;
   background: #ffffff;
   border: var(--border-width) solid var(--border);
-  border-radius: var(--radius-md);
-  padding: 1rem 1rem 1.4rem;
+  border-radius: var(--radius-lg);
+  padding: 1.25rem 1.25rem 1.5rem;
   box-shadow: 0 12px 0 var(--border);
   text-align: center;
   color: #121316;
+  transform: rotate(-0.5deg);
+  transition: transform 0.2s ease-out;
+}
+.polaroid-card:hover {
+  transform: rotate(0deg) translateY(-2px);
+}
+
+.polaroid-tape-sticker {
+  position: absolute;
+  top: -16px;
+  left: 50%;
+  transform: translateX(-50%) rotate(2deg);
+  background: var(--accent);
+  color: #ffffff;
+  font-family: var(--font-display);
+  font-weight: 700;
+  font-size: 0.78rem;
+  letter-spacing: 0.06em;
+  padding: 4px 16px;
+  border-radius: 4px;
+  border: 2px solid var(--border);
+  box-shadow: 2px 2px 0 var(--border);
+  z-index: 20;
+  user-select: none;
+  white-space: nowrap;
 }
 
 .polaroid-photo-area {
   position: relative;
-  background: #000000;
-  border-radius: var(--radius-sm);
-  border: 2px solid var(--border);
+  background: #fffdfa;
+  border-radius: var(--radius-md);
+  border: 2.5px solid var(--border);
   aspect-ratio: 1 / 1;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 0.85rem;
+  margin-bottom: 1rem;
   overflow: hidden;
+  box-shadow: inset 0 2px 8px rgba(0,0,0,0.06);
 }
 
 .qr-canvas-wrap {
@@ -1384,27 +1411,75 @@ a {
   display: flex;
   align-items: center;
   justify-content: center;
-  background: #ffffff;
+  background: transparent;
+  padding: 12px;
 }
 
-.qr-canvas-wrap canvas, .qr-canvas-wrap img {
-  width: 90% !important;
-  height: 90% !important;
+.qr-canvas-wrap canvas {
+  width: 100% !important;
+  height: 100% !important;
+  max-width: 320px;
+  max-height: 320px;
   object-fit: contain;
-  image-rendering: pixelated;
+  image-rendering: auto;
+  border-radius: 10px;
+  filter: drop-shadow(0 2px 4px rgba(0,0,0,0.04));
 }
 
 .qr-frame-badge {
   position: absolute;
-  top: 8px;
-  right: 8px;
-  background: var(--accent);
-  color: #fff;
+  top: 10px;
+  right: 10px;
+  background: var(--primary);
+  color: #ffffff;
   font-size: 0.75rem;
   font-weight: 700;
-  padding: 2px 8px;
+  padding: 3px 10px;
   border-radius: var(--radius-full);
+  border: 2px solid var(--border);
+  box-shadow: 2px 2px 0 var(--border);
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  z-index: 10;
+}
+
+.qr-frame-dots {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  margin-top: -6px;
+  margin-bottom: 1rem;
+}
+.qr-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--border-subtle);
   border: 1.5px solid var(--border);
+  transition: all 0.2s;
+}
+.qr-dot.active {
+  background: var(--accent);
+  transform: scale(1.3);
+}
+
+.polaroid-caption {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.polaroid-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.polaroid-sub {
+  font-size: 0.88rem;
+  color: var(--ink-muted);
 }
 
 .qr-loading-spinner {
@@ -1737,9 +1812,14 @@ a {
 
 .ferry-transfer-stage {
   width: 100%;
-  height: 140px;
+  height: 150px;
   margin-bottom: 1.5rem;
   overflow: hidden;
+  position: relative;
+  border-radius: var(--radius-lg);
+  background: linear-gradient(180deg, var(--bg-card) 0%, var(--bg-card-muted) 100%);
+  border: var(--border-width) solid var(--border);
+  box-shadow: 0 6px 0 var(--border);
 }
 
 .ferry-anim-svg {
@@ -1748,27 +1828,150 @@ a {
 }
 
 .sailing-ferry {
-  animation: bobFerry 2.4s ease-in-out infinite alternate;
+  animation: bobFerry 2s ease-in-out infinite alternate;
   transform-origin: center bottom;
 }
 
 @keyframes bobFerry {
   0% { transform: translateY(0px) rotate(-1.5deg); }
-  50% { transform: translateY(-5px) rotate(1deg); }
+  50% { transform: translateY(-6px) rotate(1.2deg); }
   100% { transform: translateY(2px) rotate(-0.5deg); }
 }
 
+/* Smoke puff animations */
+.puff-1 {
+  animation: smokePuff 2.2s ease-out infinite;
+  transform-origin: center;
+}
+.puff-2 {
+  animation: smokePuff 2.2s ease-out infinite 0.7s;
+  transform-origin: center;
+}
+.puff-3 {
+  animation: smokePuff 2.2s ease-out infinite 1.4s;
+  transform-origin: center;
+}
+
+@keyframes smokePuff {
+  0% {
+    transform: translate(0, 0) scale(0.6);
+    opacity: 0.9;
+  }
+  50% {
+    opacity: 0.7;
+  }
+  100% {
+    transform: translate(18px, -24px) scale(1.8);
+    opacity: 0;
+  }
+}
+
 .wave-path.back-wave {
-  animation: waveScroll 3s linear infinite;
+  animation: waveScroll 3.5s linear infinite;
 }
 .wave-path.front-wave {
-  animation: waveScroll 2.2s linear infinite reverse;
+  animation: waveScroll 2.4s linear infinite reverse;
 }
 
 @keyframes waveScroll {
   from { transform: translateX(0); }
   to { transform: translateX(-100px); }
 }
+
+/* Transfer data flow packets */
+.transfer-packet-stream {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1rem;
+  background: var(--bg-card);
+  border: 2px dashed var(--border-subtle);
+  border-radius: var(--radius-md);
+  margin-bottom: 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.stream-node {
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+  font-size: 0.82rem;
+  font-weight: 700;
+  z-index: 2;
+}
+
+.stream-track {
+  flex: 1;
+  height: 4px;
+  background: var(--border-subtle);
+  border-radius: 2px;
+  margin: 0 1rem;
+  position: relative;
+  overflow: hidden;
+}
+
+.stream-pulse {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 25%;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, var(--mint), transparent);
+  animation: streamFlow 1.4s linear infinite;
+}
+
+@keyframes streamFlow {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(400%); }
+}
+
+/* Confetti Canvas Overlay */
+.confetti-canvas {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 9999;
+  width: 100%;
+  height: 100%;
+}
+
+/* Text ping-pong test box for Checkpoint 2 */
+.handshake-test-box {
+  background: var(--bg-card);
+  border: 2px solid var(--border);
+  border-radius: var(--radius-md);
+  padding: 1rem;
+  margin-bottom: 1.25rem;
+  box-shadow: 0 4px 0 var(--border);
+}
+
+.test-box-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+}
+
+.test-ping-log {
+  background: var(--bg-card-muted);
+  border: 1.5px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  padding: 0.6rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  max-height: 90px;
+  overflow-y: auto;
+  margin-bottom: 0.6rem;
+}
+
+.test-ping-row {
+  margin-bottom: 2px;
+}
+.test-ping-row.sent { color: var(--primary); }
+.test-ping-row.recv { color: var(--mint); }
 
 .metrics-card {
   background: var(--bg-card);

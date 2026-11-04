@@ -432,6 +432,7 @@
 
           <!-- Polaroid-style QR container -->
           <div class="polaroid-card">
+            <div class="polaroid-tape-sticker">PAIR ME ⚡</div>
             <div class="polaroid-photo-area">
               <div id="sender-qr-canvas-wrap" class="qr-canvas-wrap">
                 <!-- QR Code generated here -->
@@ -442,6 +443,7 @@
               </div>
               <div class="qr-frame-badge hidden" id="sender-qr-frame-badge">Frame 1/1</div>
             </div>
+            <div class="qr-frame-dots hidden" id="sender-qr-dots"></div>
             <div class="polaroid-caption">
               <span class="polaroid-title">Snapferry Sender Handshake</span>
               <span class="polaroid-sub" id="sender-qr-status">Gathering network routes...</span>
@@ -557,6 +559,7 @@
           </div>
 
           <div class="polaroid-card">
+            <div class="polaroid-tape-sticker">ANSWER CODE ⚡</div>
             <div class="polaroid-photo-area">
               <div id="receiver-qr-canvas-wrap" class="qr-canvas-wrap">
                 <div class="qr-loading-spinner" id="receiver-qr-spinner">
@@ -566,6 +569,7 @@
               </div>
               <div class="qr-frame-badge hidden" id="receiver-qr-frame-badge">Frame 1/1</div>
             </div>
+            <div class="qr-frame-dots hidden" id="receiver-qr-dots"></div>
             <div class="polaroid-caption">
               <span class="polaroid-title">Snapferry Answer Handshake</span>
               <span class="polaroid-sub" id="receiver-qr-status">Waiting for sender scan...</span>
@@ -614,10 +618,29 @@
               <!-- Funnel -->
               <rect x="220" y="61" width="7" height="9" fill="#f97316" stroke="#121316" stroke-width="2"/>
               <!-- Puffs -->
-              <circle cx="228" cy="54" r="3" fill="#e2e8f0" stroke="#121316" stroke-width="1.5" class="puff-1"/>
-              <circle cx="234" cy="47" r="4" fill="#e2e8f0" stroke="#121316" stroke-width="1.5" class="puff-2"/>
+              <circle cx="228" cy="54" r="3.5" fill="#e2e8f0" stroke="#121316" stroke-width="1.5" class="puff-1"/>
+              <circle cx="234" cy="46" r="4.5" fill="#e2e8f0" stroke="#121316" stroke-width="1.5" class="puff-2"/>
+              <circle cx="240" cy="38" r="5.5" fill="#e2e8f0" stroke="#121316" stroke-width="1.5" class="puff-3"/>
             </g>
           </svg>
+        </div>
+
+        <!-- Transfer packet stream -->
+        <div class="transfer-packet-stream">
+          <div class="stream-node"><span>📱</span> <span id="stream-from-label">Sender</span></div>
+          <div class="stream-track"><div class="stream-pulse"></div></div>
+          <div class="stream-node"><span id="stream-to-label">Receiver</span> <span>💻</span></div>
+        </div>
+
+        <!-- Handshake Ping-Pong Test Checkpoint -->
+        <div class="handshake-test-box" id="handshake-test-box">
+          <div class="test-box-header">
+            <span>DataChannel Ping-Pong Check</span>
+            <button id="btn-send-test-ping" class="btn-secondary btn-sm">Send Ping ⚡</button>
+          </div>
+          <div class="test-ping-log" id="test-ping-log">
+            <div class="test-ping-row">Channel connected. Awaiting test ping...</div>
+          </div>
         </div>
 
         <!-- Transfer Metrics & Progress Card -->
@@ -825,6 +848,9 @@
 
   <!-- Toast Notification Container -->
   <div id="toast-container" class="toast-container" aria-live="polite"></div>
+
+  <!-- Confetti Canvas for Celebrations -->
+  <canvas id="confetti-canvas" class="confetti-canvas"></canvas>
 
   <!-- Vendor Scripts (Local Only, No CDNs) -->
   <script src="vendor/qrcode.js"></script>
